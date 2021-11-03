@@ -1,4 +1,4 @@
-version: "3"
+version: '3'
 
 services:
   namenode:
@@ -9,7 +9,7 @@ services:
       - 9870:9870
       - 9000:9000
     volumes:
-      - ./hadoop/dfs/name:/hadoop/dfs/name
+      - hadoop_namenode:/hadoop/dfs/name
     environment:
       - CLUSTER_NAME=test
     env_file:
@@ -26,11 +26,12 @@ services:
     depends_on:
       - namenode
     volumes:
-      - ./hadoop/dfs/data1:/hadoop/dfs/data
+      - hadoop_datanode1:/hadoop/dfs/data
     environment:
-      SERVICE_PRECONDITION: "namenode:9870"
+      SERVICE_PRECONDITION: 'namenode:9870'
     env_file:
       - ./hadoop.env
+
   datanode2:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode2
@@ -42,11 +43,12 @@ services:
     depends_on:
       - namenode
     volumes:
-      - ./hadoop/dfs/data2:/hadoop/dfs/data
+      - hadoop_datanode2:/hadoop/dfs/data
     environment:
-      SERVICE_PRECONDITION: "namenode:9870"
+      SERVICE_PRECONDITION: 'namenode:9870'
     env_file:
       - ./hadoop.env
+
   datanode3:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode3
@@ -58,18 +60,18 @@ services:
     depends_on:
       - namenode
     volumes:
-      - ./hadoop/dfs/data3:/hadoop/dfs/data
+      - hadoop_datanode3:/hadoop/dfs/data
     environment:
-      SERVICE_PRECONDITION: "namenode:9870"
+      SERVICE_PRECONDITION: 'namenode:9870'
     env_file:
       - ./hadoop.env
-  
+
   resourcemanager:
     image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
     container_name: resourcemanager
     restart: always
     environment:
-      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 datanode1:9866 datanode2:9866 datanode3:9866"
+      SERVICE_PRECONDITION: 'namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 datanode1:9866 datanode2:9866 datanode3:9866'
     env_file:
       - ./hadoop.env
 
@@ -78,21 +80,22 @@ services:
     container_name: nodemanager
     restart: always
     environment:
-      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 datanode1:9866 datanode2:9866 datanode3:9866 resourcemanager:8088"
+      SERVICE_PRECONDITION: 'namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 datanode1:9866 datanode2:9866 datanode3:9866 resourcemanager:8088'
     env_file:
       - ./hadoop.env
-  
+
   historyserver:
     image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
     container_name: historyserver
     restart: always
     environment:
-      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 datanode1:9866 datanode2:9866 datanode3:9866 resourcemanager:8088"
+      SERVICE_PRECONDITION: 'namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 datanode1:9866 datanode2:9866 datanode3:9866 resourcemanager:8088'
     volumes:
-      - ./timeline:/hadoop/yarn/timeline
+      - hadoop_historyserver:/hadoop/yarn/timeline
     env_file:
       - ./hadoop.env
-
+  
+  
   zookeeper:
     image: 'bitnami/zookeeper:latest'
     container_name: zookeeper
@@ -114,13 +117,12 @@ services:
     - ALLOW_PLAINTEXT_LISTENER=yes
     depends_on:
         - zookeeper
-#     healthcheck:
-#       test: '/opt/bitnami/kafka/bin/kafka-topics.sh --create --partitions 4 --bootstrap-server kafka:9092 --topic test-1 && 
-# /opt/bitnami/kafka/bin/kafka-topics.sh --create --partitions 4 --bootstrap-server kafka:9092 --topic test-2 && 
-# /opt/bitnami/kafka/bin/kafka-topics.sh --create --partitions 4 --bootstrap-server kafka:9092 --topic test-3 && 
-# /opt/bitnami/kafka/bin/kafka-topics.sh --create --partitions 4 --bootstrap-server kafka:9092 --topic test-4 && 
-# /opt/bitnami/kafka/bin/kafka-topics.sh --create --partitions 4 --bootstrap-server kafka:9092 --topic test-5 && 
-# /opt/bitnami/kafka/bin/kafka-topics.sh --create --partitions 4 --bootstrap-server kafka:9092 --topic test-6' 
+    healthcheck:
+      test: '/opt/bitnami/kafka/bin/kafka-topics.sh --create --partitions 4 --bootstrap-server kafka:9092 --topic final-test-1 && 
+/opt/bitnami/kafka/bin/kafka-topics.sh --create --partitions 4 --bootstrap-server kafka:9092 --topic final-test-2 && 
+/opt/bitnami/kafka/bin/kafka-topics.sh --create --partitions 4 --bootstrap-server kafka:9092 --topic final-test-3 && 
+/opt/bitnami/kafka/bin/kafka-topics.sh --create --partitions 4 --bootstrap-server kafka:9092 --topic final-test-4 && 
+/opt/bitnami/kafka/bin/kafka-topics.sh --create --partitions 4 --bootstrap-server kafka:9092 --topic final-test-5' 
 
   flume:
     image: 'probablyfine/flume:latest'
@@ -131,8 +133,7 @@ services:
         - ./agent.conf:/opt/flume-config/flume.conf
     depends_on:
         - kafka
-        - namenode
-    command: '/opt/flume/bin/start-flume'
+        - namenode  
   
   spark:
     image: docker.io/bitnami/spark:3
@@ -157,3 +158,11 @@ services:
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
+  
+volumes:
+  hadoop_namenode:
+  hadoop_datanode1:
+  hadoop_datanode2:
+  hadoop_datanode3:
+  hadoop_historyserver:
+
